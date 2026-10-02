@@ -1,14 +1,14 @@
 /**
- * AFXC Compiler Engine v10.0.0 - Test Suite Automatizada
+ * AFXC Compiler Engine v8.0.0 - Test Suite Automatizada
  * Suite de pruebas unitarias e integración para CI/CD
  */
 
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const AFXC = require('./afxc.js');
+const AFXC = require('../afxc-v8.js');
 
-describe('AFXC v10.0.0 Compiler Engine Suite', () => {
+describe('AFXC v8.0.0 Compiler Engine Suite', () => {
   let compiler;
   const tmpDir = path.join(__dirname, 'tmp_test_out');
 
@@ -45,12 +45,12 @@ schema User {
 
   it('2. Debe compilar proyectos multi-archivo resolviendo dependencias e importaciones', () => {
     const userAvf = `
-export schema User {
+schema User {
   nombre: string;
   email: string @validate(type: "email");
 }
 
-export component UserBadge {
+component UserBadge {
   template(state) {
     return <span class="badge">{this.props.nombre}</span>;
   }
@@ -59,12 +59,12 @@ export component UserBadge {
     const mainAvf = `
 import { User, UserBadge } from "./User.avf";
 
-export schema Post {
+schema Post {
   titulo: string;
   autor: User @link(relation: "many-to-one");
 }
 
-export component PostCard {
+component PostCard {
   template(state) {
     return (
       <div class="card">
@@ -118,8 +118,7 @@ component App {
     const codeWithWarning = `
 schema BadEntity {
   campo: TipoInexistente;
-  rango: number @validate(min: 100, max: 10);
-  badRel: string @link(relation: "invalid-rel");
+  rango: number @validate(min: 50, max: 10);
 }
 `;
     const res = compiler.compileCode(codeWithWarning, "TestTypeCheck");

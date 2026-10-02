@@ -1,0 +1,74 @@
+/**
+ * AVFenix Design System Core Tokens & Utility Classes
+ */
+
+:root {
+  --avf-bg-primary: #ffffff;
+  --avf-bg-secondary: #f8fafc;
+  --avf-bg-card: #ffffff;
+  --avf-text-primary: #0f172a;
+  --avf-text-secondary: #475569;
+  --avf-border-color: #e2e8f0;
+  --avf-brand-primary: #2563eb;
+  --avf-brand-hover: #1d4ed8;
+  --avf-accent-success: #16a34a;
+  --avf-accent-danger: #dc2626;
+  --avf-accent-warning: #d97706;
+  --avf-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --avf-radius-sm: 4px;
+  --avf-radius-md: 8px;
+  --avf-radius-lg: 12px;
+  --avf-transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+[data-theme="dark"] {
+  --avf-bg-primary: #0f172a;
+  --avf-bg-secondary: #1e293b;
+  --avf-bg-card: #1e293b;
+  --avf-text-primary: #f8fafc;
+  --avf-text-secondary: #94a3b8;
+  --avf-border-color: #334155;
+  --avf-brand-primary: #3b82f6;
+  --avf-brand-hover: #60a5fa;
+  --avf-accent-success: #22c55e;
+  --avf-accent-danger: #ef4444;
+  --avf-accent-warning: #f59e0b;
+  --avf-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+}
+
+/* Base Reset & Transition Rules */
+body {
+  background-color: var(--avf-bg-primary);
+  color: var(--avf-text-primary);
+  transition: var(--avf-transition);
+}
+
+/* UI Utility Classes */
+.avf-card {
+  background-color: var(--avf-bg-card);
+  border: 1px solid var(--avf-border-color);
+  color: var(--avf-text-primary);
+  box-shadow: var(--avf-shadow);
+  border-radius: var(--avf-radius-md);
+  padding: 1.25rem;
+  transition: var(--avf-transition);
+}
+
+.avf-text-muted {
+  color: var(--avf-text-secondary);
+}
+
+.avf-btn-primary {
+  background-color: var(--avf-brand-primary);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--avf-radius-md);
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--avf-transition);
+}
+
+.avf-btn-primary:hover {
+  background-color: var(--avf-brand-hover);
+}

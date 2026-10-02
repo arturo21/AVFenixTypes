@@ -1,234 +1,391 @@
-# 🦅 AVFenix Types & AFXC Compiler Engine (`v10.0.0`)
+# 🦅 AVFenix Types & General.JS Ecosystem `v2.0`
 
-**AFXC (AVFenix Compiler Engine v10.0.0 Enterprise Edition)** es el motor de transpilación oficial para **AVFenix Types**, diseñado específicamente para el ecosistema full-stack de **General.JS** (`gnrl.js`, `reactive.general.js` y `routing.general.js`).
+[![CI/CD Pipeline](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-blue?style=for-the-badge&logo=githubactions)](https://github.com/arturo21/generaljs)
+[![NPM Version](https://img.shields.io/badge/NPM-v1.4.0-red?style=for-the-badge&logo=npm)](https://www.npmjs.com)
+[![WAI-ARIA Compliance](https://img.shields.io/badge/Accessibility-WCAG%202.1%20AA%2098%25-brightgreen?style=for-the-badge&logo=w3c)](https://www.w3.org/TR/WCAG21/)
+[![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
+[![Node.js](https://img.shields.io/badge/Node.js-v18%2B%20%7C%20v20%2B%20%7C%20v22%2B-green?style=for-the-badge&logo=node.js)](https://nodejs.org)
 
-A diferencia de los transpiladores tradicionales que eliminan los tipos (*Type Erasure*), **AFXC** implementa **Persistencia de Esquema Dual**: compila un único archivo `.avf` generando simultáneamente un **Manifiesto de Entidades JSON** (`.schema.json`) para la API backend/CMS y un **Bundle JavaScript de Cliente** (`.js`) optimizado para el navegador.
+**AVFenix Types** es una plataforma de desarrollo full-stack y ecosistema de tipado fuerte diseñado sobre la arquitectura reactiva de **General.JS** (`gnrl.js`, `reactive.general.js` y `routing.general.js`).
 
----
-
-## 🌟 Características Principales
-
-* 🔗 **Grafo de Dependencias Multi-Archivo (`import / export`):** Resuelve recursivamente proyectos estructurados en múltiples archivos `.avf`, previniendo importaciones circulares y fusionando los esquemas en un manifiesto único.
-* 🎯 **Lexer AST con Diagnóstico Preciso:** Tokenizador sintáctico que intercepta errores e informa la **línea y columna exacta** del fallo con punteros visuales.
-* 🧩 **Soporte JSX Nativo & Slots (`props.children`):** Instanciación automática de componentes personalizados (PascalCase) e inyección de elementos hijos dinámicos para el Virtual DOM.
-* ⚡ **AST Static Hoisting:** Identifica nodos JSX estáticos y los eleva fuera del ciclo de renderizado (`template`), acelerando las comparaciones `diff()` y `patch()` de `reactive.general.js`.
-* 🛡️ **Type-Checker Estático Semántico:** Verifica la validez de entidades, relaciones `@link`, reglas de rango `@validate` y widgets `@ui` en tiempo de compilación.
-* 🎨 **Generación de Formularios Dinámicos UI:** Lectura de decoradores `@ui` para instanciar automáticamente controles de formulario (`text-input`, `select`, `toggle`, `rich-editor`) sin escribir HTML redundante.
-* 🗄️ **Integración Backend & MariaDB / Alembic:** Generación automática de modelos ORM para SQLAlchemy, sincronización de bases de datos MariaDB y control de versiones de esquemas con Alembic (`upgrade` / `downgrade`).
-* 🗺️ **Source Maps V3 (Base64 VLQ):** Mapeo de código para depuración directa sobre las líneas del archivo `.avf` en las DevTools del navegador.
-* ⚙️ **CLI de Producción & Configuration File:** Soporte para `afxc.config.json` y comandos de consola (`init`, `check`, `build`).
+A diferencia de los entornos tradicionales con eliminación de tipos (*Type Erasure*), **AVFenix** ofrece **Persistencia de Esquema Dual**: un único archivo `.avf` compila simultáneamente un **Manifiesto de Entidades JSON** para el backend/CMS/Base de Datos y un **Bundle JavaScript de Cliente** optimizado con **AST Static Hoisting** para el Virtual DOM.
 
 ---
 
-## 📦 Arquitectura de Salida Dual
+## 📐 Tabla de Contenidos
 
-Cuando **AFXC** procesa un módulo `.avf`, genera tres artefactos en la carpeta de distribución (`/dist`):
+1. [🌟 Módulos y Arquitectura del Ecosistema v2.0](#-módulos-y-arquitectura-del-ecosistema-v20)
+2. [⚡ Comparativa: AVFenix vs React vs Vue](#-comparativa-avfenix-vs-react-vs-vue)
+3. [📁 Estructura del Proyecto Pro](#-estructura-del-proyecto-pro)
+4. [🚀 Guía de Inicio Rápido](#-guía-de-inicio-rápido)
+5. [📖 Especificación y Sintaxis del Lenguaje `.avf`](#-especificación-y-sintaxis-del-lenguaje-avf)
+   * [1. Esquemas CMS y Base de Datos (`export schema`)](#1-esquemas-cms-y-base-de-datos-export-schema)
+   * [2. Componentes Reactivos (`export component`)](#2-componentes-reactivos-export-component)
+   * [3. Renderizado en Servidor y Rehidratación (`@avfenix/ssr`)](#3-renderizado-en-servidor-y-rehidratación-avfenixssr)
+   * [4. Estado Global y Signals (`@avfenix/store`)](#4-estado-global-y-signals-avfenixstore)
+   * [5. Tokens de Diseño y Temas (`@avfenix/theme`)](#5-tokens-de-diseño-y-temas-avfenixtheme)
+   * [6. Cliente HTTP Tipado (`@avfenix/client`)](#6-cliente-http-tipado-avfenixclient)
+   * [7. Pruebas Unitarias Aisladas (`@avfenix/test-utils`)](#7-pruebas-unitarias-aisladas-avfenixtest-utils)
+6. [♿ Auditoría de Accesibilidad WAI-ARIA & WCAG 2.1 AA](#-auditoría-de-accesibilidad-wai-aria--wcag-21-aa)
+7. [🔄 Migración Automática desde TypeScript (`codemod`)](#-migración-automática-desde-typescript-codemod)
+8. [📊 Integración con MariaDB, Flask y SQLAlchemy](#-integración-con-mariadb-flask-y-sqlalchemy)
+9. [🤖 Automatización CI/CD y Publicación NPM](#-automatización-cicd-y-publicación-npm)
+10. [📜 Licencia y Licenciamiento](#-licencia-y-licenciamiento)
 
-```text
-proyecto/
-├── src/
-│   ├── User.avf
-│   └── Article.avf
-├── dist/
-│   ├── Article.schema.json   <-- Manifiesto Tipado para el CMS y Backend API
-│   ├── Article.js            <-- Bundle Cliente enlazado a General.JS
-│   └── Article.js.map        <-- Source Map V3 (Depuración)
-└── afxc.config.json
+---
+
+## 🌟 Módulos y Arquitectura del Ecosistema v2.0
+
+El ecosistema **AVFenix** está compuesto por herramientas modulares e interconectadas:
+
+```
+                                  ┌───────────────────────────┐
+                                  │   Archivos de Origen      │
+                                  │ .avf / TypeScript (.ts)   │
+                                  └─────────────┬─────────────┘
+                                                │
+                                                ▼
+                                  ┌───────────────────────────┐
+                                  │   AFXC Compiler v10.0     │
+                                  │   AST Static Hoisting     │
+                                  └──────┬─────────────┬──────┘
+                                         │             │
+                    ┌────────────────────┘             └────────────────────┐
+                    ▼                                                       ▼
+      ┌───────────────────────────┐                           ┌───────────────────────────┐
+      │   Manifiesto de Entidades │                           │  Bundle Cliente JS (V-DOM)│
+      │   [Nombre].schema.json    │                           │  [Nombre].js + Source Maps│
+      └─────────────┬─────────────┘                           └─────────────┬─────────────┘
+                    │                                                       │
+  ┌─────────────────┴─────────────────┐                   ┌─────────────────┴─────────────────┐
+  │ Integraciones Backend / ORM       │                   │ Módulos de Aplicación Cliente     │
+  │ • MariaDB & SQLAlchemy (Alembic) │                   │ • @avfenix/ssr (Rehidratación)    │
+  │ • Validador HTTP de Backend       │                   │ • @avfenix/store (State & Signals)│
+  │ • Generación Form UI CMS Dynamic  │                   │ • @avfenix/theme (Dark/Light)     │
+  └───────────────────────────────────┘                   │ • @avfenix/client (Typed Fetch)   │
+                                                          │ • @avfenix/test-utils (Unit VDOM) │
+                                                          └───────────────────────────────────┘
 ```
 
-1. **`[Modulo].schema.json`**: Contiene la definición de datos, tipos, decoradores `@ui` y `@validate`, relaciones relacionales e informe de diagnósticos del Type-Checker.
-2. **`[Modulo].js`**: Código ejecutable envuelto en el patrón **Module Revealed**, protegido dentro de `genrl.run()` y `genrl.safeEval()` para evitar fallos globales en producción.
-3. **`[Modulo].js.map`**: Mapeo estandarizado Base64 VLQ para inspección de código.
+| Módulo / Herramienta | Descripción y Funcionalidad Principal |
+| :--- | :--- |
+| **`AFXC` (`compiler/afxc.js`)** | Compilador con lexer AST, resolución de grafos de dependencia, static hoisting para VDOM y emisor dual. |
+| **`AVFenix CLI` (`bin/avfenix-cli.js`)** | Herramienta CLI v1.4.0 (`create`, `g`, `dev`, `build`, `check`, `check:a11y`, `codemod`, `db:sync`, `ui:pack`). |
+| **`@avfenix/ssr` (`lib/avfenix-ssr.js`)** | Motor SSR para renderizar HTML estático (`renderToString`) y rehidratar en navegador (`AVFenixHydrate`). |
+| **`@avfenix/store` (`lib/avfenix-store.js`)** | Gestor de estado global con apoyo para Proxies, mutaciones, *Time-Travel Debugging* y *Signals* atómicos. |
+| **`@avfenix/theme` (`lib/avfenix-theme.js/.css`)** | Sistema de diseño con Design Tokens como variables CSS, gestión de temas claro/oscuro y persistencia. |
+| **`@avfenix/client` (`lib/avfenix-client.js`)** | Cliente HTTP tipado que intercepta y valida peticiones contra esquemas `.schema.json` antes de enviarlas. |
+| **`@avfenix/test-utils` (`lib/avfenix-test-utils.js`)** | Suite de pruebas unitarias para montar componentes `.avf`, simular eventos VDOM y realizar aserciones. |
+| **`Codemod TS` (`lib/ts-to-avf.js`)** | Convertidor estático de interfaces y tipos de TypeScript (`.ts`) a esquemas nativos `.avf`. |
+| **`DevServer` (`dev-server.js`)** | Servidor local con recompilación al instante, SSE Live Reload y **Widget Flotante de Accesibilidad en Vivo**. |
+
+---
+
+## ⚡ Comparativa: AVFenix vs React vs Vue
+
+| Característica / Capacidad | React + Next.js | Vue 3 + Nuxt | **AVFenix Ecosistema v2.0** |
+| :--- | :--- | :--- | :--- |
+| **Manejo de Tipos** | Eliminación en compilación (*Type Erasure*) | Eliminación en compilación (*Type Erasure*) | **Persistencia Dual** (`.schema.json` + `.js`) |
+| **Optimización VDOM** | React Compiler (experimental) | Compiler-informed Virtual DOM | **AST Static Hoisting nativo en AFXC** |
+| **Validación Backend/DB** | Requiere Prisma, Zod o Yup adicionales | Requiere ORMs/Zod adicionales | **Sincronización nativa MariaDB & Alembic** |
+| **Auditoría Accesibilidad** | Plugins ESLint o AXE externos | Plugins ESLint externos | **Integrada en CLI (`check:a11y`) y Widget DevServer** |
+| **Tamaño de Librería Base** | ~130 KB (React + React-DOM) | ~50 KB (Vue Core) | **< 15 KB (General.JS + Reactive Core)** |
+
+---
+
+## 📁 Estructura del Proyecto Pro
+
+Al inicializar un proyecto con `npx avfenix create mi-app` o utilizar `avfenix-template-pro.zip`:
+
+```text
+mi-app/
+├── bin/
+│   └── avfenix-cli.js               # CLI v1.4.0 ejecutable
+├── compiler/
+│   └── afxc.js                      # Compilador AFXC v10.0
+├── lib/
+│   ├── avfenix-ssr.js               # Módulo de Server-Side Rendering
+│   ├── avfenix-store.js             # Módulo de Estado Global & Signals
+│   ├── avfenix-theme.js             # Motor JS de Tematización
+│   ├── avfenix-theme.css            # Design Tokens en CSS Variables
+│   ├── avfenix-client.js            # Cliente HTTP con validación pre-flight
+│   ├── avfenix-test-utils.js        # Utilidades de Pruebas Unitarias
+│   └── ts-to-avf.js                 # Codemod TypeScript -> AVF
+├── src/
+│   ├── components/
+│   │   ├── HeaderBar.avf            # Componentes reactivos UI
+│   │   └── ThemeToggle.avf
+│   ├── models/
+│   │   └── Usuario.avf              # Esquemas de datos con @ui y @validate
+│   ├── stores/
+│   │   └── appStore.js              # Stores globales
+│   └── App.avf                      # Componente raíz
+├── dist/                            # Artefactos compilados (.js, .schema.json, .map)
+├── index.html                       # HTML principal
+├── dev-server.js                    # Servidor local con Widget A11y SSE
+├── afxc.config.json                 # Configuración del proyecto
+└── package.json                     # Scripts y dependencias
+```
 
 ---
 
 ## 🚀 Guía de Inicio Rápido
 
-### 1. Instalación y Requisitos
-Asegúrate de contar con **Node.js** (v18.0.0 o superior) y las librerías base del ecosistema en el cliente (`gnrl.js`, `reactive.general.js`, `routing.general.js`).
+### 1. Requisitos Previos
+* **Node.js** v18.0.0 o superior.
+* Gestor de paquetes `npm` o `npx`.
 
+### 2. Crear un Nuevo Proyecto Full-Stack
 ```bash
-# Instalación de dependencias del proyecto
-npm install
+npx avfenix create mi-aplicacion
+cd mi-aplicacion
 ```
 
-### 2. Crear Archivo de Configuración
-Inicializa el archivo de configuración en la raíz de tu proyecto:
-
+### 3. Iniciar el Servidor de Desarrollo
 ```bash
-npx afxc init
-# O ejecutas directamente: node afxc.js init
+npm run dev
 ```
+Navega a `http://localhost:3000`. El servidor monitorizará los archivos `.avf` dentro de `src/`, recompilará automáticamente e inyectará el **Widget de Accesibilidad en vivo** en el navegador.
 
-Esto generará un archivo `afxc.config.json`:
-
-```json
-{
-  "entry": "./src/Main.avf",
-  "outDir": "./dist",
-  "strictMode": false,
-  "cmsManifest": true,
-  "sourceMap": true
-}
-```
-
-### 3. Verificación de Tipos (Sin Emitir Archivos)
-Ejecuta el Type-Checker estático para analizar el proyecto:
-
+### 4. Verificar Tipos y Accesibilidad WAI-ARIA
 ```bash
+# Verificación estática de tipos
 npm run check
+
+# Auditoría estática de accesibilidad WCAG 2.1 AA
+npm run check:a11y
 ```
 
-### 4. Compilación de Producción
-Genera el bundle cliente, el manifiesto CMS y los Source Maps:
-
+### 5. Compilación para Producción
 ```bash
 npm run build
 ```
 
 ---
 
-## 🎨 Formularios Dinámicos Guiados por Metadatos `@ui`
+## 📖 Especificación y Sintaxis del Lenguaje `.avf`
 
-Una de las capacidades más potentes de **AVFenix Types** es la generación automática de interfaces de usuario a partir del manifiesto de esquema `.schema.json`. Al definir un `schema` con decoradores `@ui`, no es necesario escribir código HTML repetitivo para formularios de creación o edición.
+### 1. Esquemas CMS y Base de Datos (`export schema`)
+Define estructuras de datos con soporte para atributos de interfaz (`@ui`), reglas de validación (`@validate`) y relaciones relacionales (`@link`):
 
-### 1. Definición del Esquema `.avf`
 ```typescript
-schema Producto {
-  nombre: string @ui(widget: "text-input", label: "Nombre del Producto", required: true, placeholder: "Ej. Laptop Pro 15");
-  precio: number @validate(min: 0, max: 100000) @ui(widget: "number-input", label: "Precio ($USD)");
-  categoria: string @ui(widget: "select", label: "Categoría", options: ["Electrónica", "Hogar", "Ropa"]);
-  descripcion: text @ui(widget: "rich-editor", label: "Descripción Detallada");
-  disponible: boolean @ui(widget: "toggle", label: "Disponible para Venta");
+export schema Usuario {
+  id: string @ui(widget: "text-input", label: "Identificador", required: true);
+  nombre: string @ui(widget: "text-input", label: "Nombre Completo", required: true);
+  email: string @validate(pattern: "^[^@]+@[^@]+\.[^@]+$") @ui(widget: "email-input", label: "Correo Electrónico", required: true);
+  edad?: number @validate(min: 18, max: 99) @ui(widget: "number-input", label: "Edad");
+  rol: string @ui(widget: "select", options: ["Admin", "Editor", "Usuario"]);
+  activo: boolean @ui(widget: "toggle", label: "Estado Activo");
 }
 ```
 
-### 2. Componente de Formulario Automático (`AutoForm`)
-Este componente dinámico lee la definición del manifiesto en tiempo de ejecución y renderiza el control correspondiente para cada campo:
+### 2. Componentes Reactivos (`export component`)
+Componentes visuales con estado encapsulado (`this.state`), ciclo de vida, slots dinámicos (`this.props.children`) y sintaxis JSX:
 
-```javascript
-/**
- * AutoForm: Componente que renderiza dinámicamente formularios basados en metadatos @ui
- */
-class AutoForm extends reactv.Componente {
-  state = { formData: {}, errors: [] };
+```typescript
+import { Usuario } from "../models/Usuario.avf";
 
-  renderWidget(fieldName, fieldInfo) {
-    const ui = (fieldInfo.decorators && fieldInfo.decorators.ui) || {};
-    const label = ui.label || fieldName;
-    const widget = ui.widget || "text-input";
-    const required = ui.required ? true : false;
-    const value = this.state.formData[fieldName] || "";
+export component TarjetaUsuario {
+  state = { expanded: false };
 
-    const updateField = (val) => {
-      this.setState({
-        formData: Object.assign({}, this.state.formData, { [fieldName]: val })
-      });
-    };
+  onMount() {
+    console.log("Tarjeta de usuario montada.");
+  }
 
-    switch (widget) {
-      case "select":
-        return (
-          <div class="form-group">
-            <label>{label} {required ? "*" : ""}</label>
-            <select class="form-control" onChange={(e) => updateField(e.target.value)}>
-              <option value="">-- Seleccionar --</option>
-              {(ui.options || []).map(opt => <option value={opt}>{opt}</option>)}
-            </select>
-          </div>
-        );
-
-      case "toggle":
-        return (
-          <div class="form-group form-check">
-            <input type="checkbox" class="form-check-input" checked={!!value} onChange={(e) => updateField(e.target.checked)} />
-            <label class="form-check-label">{label}</label>
-          </div>
-        );
-
-      case "number-input":
-        return (
-          <div class="form-group">
-            <label>{label} {required ? "*" : ""}</label>
-            <input type="number" class="form-control" value={value} onInput={(e) => updateField(Number(e.target.value))} />
-          </div>
-        );
-
-      case "text-input":
-      default:
-        return (
-          <div class="form-group">
-            <label>{label} {required ? "*" : ""}</label>
-            <input type="text" class="form-control" placeholder={ui.placeholder || ""} value={value} onInput={(e) => updateField(e.target.value)} />
-          </div>
-        );
-    }
+  toggleExpand() {
+    this.setState({ expanded: !this.state.expanded });
   }
 
   template(state) {
-    const schema = this.props.schemaManifest; // Recibe el .schema.json de AFXC
-    const fields = (schema && schema.entities && schema.entities[0] && schema.entities[0].fields) || {};
-
     return (
-      <form onSubmit={(e) => { e.preventDefault(); this.props.onSubmit(state.formData); }}>
-        {Object.keys(fields).map(fName => this.renderWidget(fName, fields[fName]))}
-        <button type="submit" class="btn btn-primary">Guardar Registro</button>
-      </form>
+      <div class="avf-card" role="region" aria-label="Información de Usuario">
+        <header class="avf-card-header">
+          <h3>{this.props.usuario.nombre}</h3>
+          <button 
+            class="avf-btn" 
+            aria-label="Expandir detalles de usuario"
+            aria-expanded={state.expanded ? "true" : "false"}
+            onClick={() => this.toggleExpand()}
+          >
+            {state.expanded ? "Ocultar" : "Detalles"}
+          </button>
+        </header>
+
+        {state.expanded && (
+          <div class="avf-card-body">
+            <p><strong>Email:</strong> {this.props.usuario.email}</p>
+            <p><strong>Rol:</strong> {this.props.usuario.rol}</p>
+            {this.props.children}
+          </div>
+        )}
+      </div>
     );
   }
 }
 ```
 
----
+### 3. Renderizado en Servidor y Rehidratación (`@avfenix/ssr`)
+Renderiza componentes `.avf` a cadenas HTML estáticas en el servidor Node.js o Express y rehidrata en el cliente:
 
-## 🗄️ Persistencia en Backend: MariaDB y Alembic
+```javascript
+// Servidor Express
+const { renderToString } = require('./lib/avfenix-ssr.js');
+const { App } = require('./dist/App.js');
 
-**AVFenix Types** permite sincronizar los esquemas de datos con la base de datos **MariaDB** y gestionar el historial de versiones con **Alembic**:
-
-### 1. Modelos ORM para SQLAlchemy (`avfenix_mariadb.py`)
-```python
-from avfenix_mariadb import generate_sqlalchemy_file, AVFenixMariaDBSync
-
-# Genera la capa declarativa de SQLAlchemy mapeada a MariaDB
-generate_sqlalchemy_file("dist/Producto.schema.json", "models_mariadb.py")
-
-# Sincroniza directamente las tablas en MariaDB
-syncer = AVFenixMariaDBSync("dist/Producto.schema.json")
-syncer.sync_db("mysql+pymysql://usuario:password@localhost:3306/mi_db")
+app.get('/', async (req, res) => {
+  const htmlStr = renderToString(App, { user: 'Carlos' });
+  res.send(`
+    <div id="app-root">${htmlStr}</div>
+    <script src="/gnrl.js"></script>
+    <script src="/reactive.general.js"></script>
+    <script src="/dist/App.js"></script>
+    <script>AVFenixHydrate(App, '#app-root');</script>
+  `);
+});
 ```
 
-### 2. Control de Migraciones con Alembic (`avfenix_alembic-v2.py`)
-```python
-from avfenix_alembic import AVFenixAlembicManager
+### 4. Estado Global y Signals (`@avfenix/store`)
+Módulos de estado global reactivos con soporte para mutaciones, acciones asíncronas y *time-travel*:
 
-manager = AVFenixAlembicManager("mysql+pymysql://usuario:password@localhost:3306/mi_db")
+```javascript
+import { createStore, createSignal } from './lib/avfenix-store.js';
 
-# Inicializa la estructura de Alembic
-manager.init_alembic()
+// 1. Store Centralizado
+export const authStore = createStore({
+  name: 'AuthStore',
+  state: { usuario: null, autenticado: false },
+  mutations: {
+    SET_USUARIO(state, user) {
+      state.usuario = user;
+      state.autenticado = !!user;
+    }
+  }
+});
 
-# Autogenera la migración comparando los modelos .avf con MariaDB
-manager.create_migration("agregar_campo_disponible")
+// 2. Signal Atómico
+export const contadorSignal = createSignal(0);
+```
 
-# Aplica las migraciones pendientes a MariaDB
-manager.upgrade_db()
+### 5. Tokens de Diseño y Temas (`@avfenix/theme`)
+Gestión dinámica del modo claro/oscuro y variables CSS semánticas:
 
-# Revertir / Rollback de la última migración
-manager.downgrade_db(target="-1")
+```javascript
+import { themeProvider } from './lib/avfenix-theme.js';
+
+// Cambiar tema
+themeProvider.setTheme('dark'); // 'light' | 'dark' | 'system'
+themeProvider.toggleTheme();
+```
+
+### 6. Cliente HTTP Tipado (`@avfenix/client`)
+Intercepta y valida peticiones contra manifiestos `.schema.json` antes de enviarlas por la red:
+
+```javascript
+import { createClient } from './lib/avfenix-client.js';
+import usuarioSchema from './dist/Usuario.schema.json';
+
+const api = createClient({
+  baseUrl: '/api/v1',
+  schemas: { Usuario: usuarioSchema }
+});
+
+// Valida automáticamente los datos de 'nuevoUsuario' contra Usuario.schema.json
+await api.post('/usuarios', nuevoUsuario, { entity: 'Usuario' });
+```
+
+### 7. Pruebas Unitarias Aisladas (`@avfenix/test-utils`)
+Pruebas de componentes sobre el Virtual DOM en Node.js (JSDOM / HappyDOM):
+
+```javascript
+const { mount, assert } = require('./lib/avfenix-test-utils.js');
+const { TarjetaUsuario } = require('./dist/TarjetaUsuario.js');
+
+describe('TarjetaUsuario.avf', () => {
+  it('debe expandir el panel al hacer clic en el botón', () => {
+    const wrapper = mount(TarjetaUsuario, {
+      usuario: { nombre: 'Ana', email: 'ana@ejemplo.com', rol: 'Admin' }
+    });
+
+    assert.contains(wrapper.html(), 'Ana');
+    wrapper.trigger('button', 'click');
+    assert.contains(wrapper.html(), 'ana@ejemplo.com');
+    wrapper.destroy();
+  });
+});
 ```
 
 ---
 
-## 🧪 Pruebas Automatizadas y CI/CD
+## ♿ Auditoría de Accesibilidad WAI-ARIA & WCAG 2.1 AA
 
-El repositorio includes una suite completa de pruebas unitarias (`afxc.test.js`) y una plantilla de integración continua (`ci-pipeline.yml`):
+El compilador y la CLI auditan los componentes `.avf` para garantizar el estándar WCAG 2.1 AA:
+
+* 🖼️ **Imágenes Accesibles:** Exige `alt` o `aria-hidden="true"` en elementos `<img>`.
+* ⌨️ **Navegación por Teclado:** Requiere `tabIndex={0}` y `role` explícito (`role="button"`) en elementos interactivos personalizados (`<div onClick>`).
+* 🏷️ **Botones Simbólicos:** Exige `aria-label` en botones con contenido únicamente de icono o símbolo (`×`, `+`, `<`).
+* 📑 **Campos de Formulario:** Verifica la vinculación de etiquetas `<label>` o atributos `aria-label` en entradas.
+
+### Exportación de Reportes
+```bash
+# Consola / CLI
+npx avfenix check:a11y
+
+# Formato JSON para CI/CD
+npx avfenix check:a11y --json > a11y-report.json
+
+# Formato Markdown para Pull Requests
+npx avfenix check:a11y --md > a11y-report.md
+```
+
+---
+
+## 🔄 Migración Automática desde TypeScript (`codemod`)
+
+Migra carpetas enteras de tipos o interfaces `.ts` / `.tsx` existentes a esquemas nativos `.avf`:
 
 ```bash
-# Ejecución de tests automatizados de AFXC v10.0.0
-npm test
+# Convertir carpeta completa
+npx avfenix codemod ./src/types
+
+# Convertir archivo individual
+npx avfenix codemod ./src/types/Producto.ts
 ```
 
 ---
 
-## 📜 Licencia y Autoría
+## 📊 Integración con MariaDB, Flask y SQLAlchemy
 
-Desarrollado para el ecosistema **General.JS** / **AVFenix**. Distribuido bajo la licencia MIT.
+Sincroniza los esquemas `.avf` compilados directamente con la base de datos MariaDB y genera archivos de migración de **Alembic / SQLAlchemy** para entornos Python/Flask:
+
+```bash
+# Sincronización de esquemas con MariaDB
+npx avfenix db:sync
+```
+
+O ejecuta el script generador de migraciones en Python:
+```bash
+python3 scripts/avfenix_alembic.py
+```
+
+---
+
+## 🤖 Automatización CI/CD y Publicación NPM
+
+El repositorio incluye el archivo `.github/workflows/release.yml` preconfigurado. Cada vez que creas y subes un *tag* de versión (`git tag v1.0.0 && git push origin v1.0.0`), GitHub Actions:
+
+1. Ejecuta la suite de pruebas unitarias (`npm test`).
+2. Verifica la auditoría de accesibilidad WAI-ARIA.
+3. Ejecuta `publish-ui.js` para compilar la librería.
+4. Publica la versión automáticamente en el registro público de **NPM**.
+
+---
+
+## 📜 Licencia y Licenciamiento
+
+**AVFenix Types** y el ecosistema **General.JS** están licenciados bajo la Licencia [MIT](LICENSE). Libre para uso comercial y personal.
+
+---
+
+<p center="align">
+  <i>Ecosistema AVFenix Types v2.0 • Diseñado para el máximo rendimiento, tipado robusto y accesibilidad universal.</i>
+</p>
